@@ -37,6 +37,13 @@ pip install -r requirements.txt
 ```
 if you have the requirements file I provided.
 
+If that doesn't work, what I did was
+```
+pip install -e . --extra-index-url https://download.pytorch.org/whl/cu129 --no-cache-dir
+pip install -U diffusers # and then I installed diffusers
+pip install -U gradio
+```
+
 # Run program
 
 Activate conda, and `python3 mygradio.py` in the same directory or `python mygradio.py` if you are on windows.
