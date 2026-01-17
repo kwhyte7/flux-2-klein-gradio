@@ -58,7 +58,7 @@ def process_interface(prompt, image_files, guidance, steps):
 
 # Building the Gradio UI
 with gr.Blocks() as demo:
-    gr.Markdown("# FLUX.2 Klein Image Generator")
+    gr.Markdown("# FLUX.2 Klein (Unofficial) Image Generator")
 
     with gr.Row():
         with gr.Column():
