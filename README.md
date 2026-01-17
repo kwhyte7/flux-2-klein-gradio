@@ -25,7 +25,7 @@ Then I made a conda environment for Python 3.12 and CUDA 12.9
 
 ```
 conda create -n flux2 python=3.12 cuda=12.9
-conda activate flux2
+conda activate flux2 # this activates conda
 ```
 
 Put this script `mygradio.py` into the same folder as the FLUX.2-klein model.
@@ -33,9 +33,15 @@ Activate conda
 
 run
 ```
-pip install -r requirments.txt
+pip install -r requirements.txt
 ```
 if you have the requirements file I provided.
 
-otherwise follow the instructions on Black Forest Labs original post.
+# Run program
+
+Activate conda, and `python3 mygradio.py` in the same directory or `python mygradio.py` if you are on windows.
+
+otherwise if it doesn't work or requirements are missing, follow the instructions on Black Forest Labs original post.
 Should work I think. Make some issues if it doesn't. Hope this saves you guys some effort!
+
+
