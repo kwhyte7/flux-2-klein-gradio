@@ -1,3 +1,4 @@
+
 import gradio as gr
 from PIL import Image
 import torch
@@ -5,10 +6,8 @@ from diffusers import Flux2KleinPipeline
 import re
 import os
 
-# Ensure the output directory exists
 os.makedirs("./outputs", exist_ok=True)
 
-# Helper for filename safety
 def to_file_safe(s: str, max_length: int = 255) -> str:
     s = s.strip().lower()
     s = re.sub(r'[^\w\-\.]', '_', s)
@@ -18,87 +17,63 @@ def to_file_safe(s: str, max_length: int = 255) -> str:
 # Model setup
 device = "cuda"
 dtype = torch.bfloat16
+# Ensure this custom pipeline class is correctly imported/available
 pipe = Flux2KleinPipeline.from_pretrained("./", torch_dtype=dtype)
 pipe.enable_model_cpu_offload()
 
-def generate_ai_image(prompt, images, guidance, steps):
-    """
-    Takes prompt, images, and slider values to generate an image.
-    """
-    # Use the first image if available, otherwise handle empty input
-    ref_image = images[0] if images else None
-    
+def generate_ai_image(prompt, pil_images, guidance, steps, width, height):
+    # Handle empty image list safely
+    ref_images = pil_images if len(pil_images) > 0 else None
+
     # Run the generation pipeline
+    # Note: Check if Flux2KleinPipeline supports a list of images or just one
     ai_image = pipe(
         prompt=prompt,
-        image=images,#ref_image,
-        height=1024,
-        width=1024,
-        guidance_scale=guidance, # Linked to slider
-        num_inference_steps=steps, # Linked to slider
+        image=ref_images,
+        height=height,
+        width=width,
+        guidance_scale=guidance,
+        num_inference_steps=steps,
         generator=torch.Generator(device=device).manual_seed(0)
     ).images[0]
 
-    # Save to disk
-    ai_image.save(f"./outputs/{to_file_safe(prompt)}.png")
+    save_path = f"./outputs/{to_file_safe(prompt, 60)}.png"
+    ai_image.save(save_path)
     return ai_image
 
-def process_interface(prompt, image_files, guidance, steps):
-    """
-    Converts Gradio files to PIL and passes UI parameters to the generator.
-    """
+def process_interface(prompt, image_files, guidance, steps, width, height):
     pil_images = []
     if image_files:
-        for file in image_files:
-            img = Image.open(file.name)
-            pil_images.append(img)
+        for file_path in image_files:
+            # image_files is a list of file paths (strings) in Gradio 4+
+            img = Image.open(file_path)
+            pil_images.append(img.convert("RGB")) # Ensure RGB mode
 
-    # Pass the sliders' values down to the model function
-    return generate_ai_image(prompt, pil_images, guidance, steps)
+    return generate_ai_image(prompt, pil_images, guidance, steps, width, height)
 
-# Building the Gradio UI
 with gr.Blocks() as demo:
-    gr.Markdown("# FLUX.2 Klein (Unofficial) Image Generator")
+    gr.Markdown("# FLUX.2 Klein Image Generator")
 
     with gr.Row():
         with gr.Column():
-            prompt_input = gr.Textbox(
-                label="Image Prompt",
-                placeholder="Describe what you want to see..."
-            )
-            
-            image_input = gr.File(
-                label="Upload Reference Images",
-                file_count="multiple",
-                file_types=["image"]
-            )
+            prompt_input = gr.Textbox(label="Image Prompt", placeholder="Describe what you want...")
+            image_input = gr.File(label="Upload Reference Images", file_count="multiple", file_types=["image"])
 
-            # --- New UI Options ---
             with gr.Accordion("Advanced Settings", open=True):
-                guidance_slider = gr.Slider(
-                    minimum=1.0, 
-                    maximum=20.0, 
-                    value=4.0, 
-                    step=0.5, 
-                    label="Guidance Scale"
-                )
-                steps_slider = gr.Slider(
-                    minimum=1, 
-                    maximum=50, 
-                    value=10, 
-                    step=1, 
-                    label="Number of Inference Steps"
-                )
-            
+                guidance_slider = gr.Slider(minimum=1.0, maximum=20.0, value=4.0, step=0.5, label="Guidance Scale")
+                steps_slider = gr.Slider(minimum=1, maximum=50, value=10, step=1, label="Steps")
+                # Changed step to 8 for tensor compatibility
+                width_slider = gr.Slider(minimum=256, maximum=1920, value=1024, step=8, label="Width")
+                height_slider = gr.Slider(minimum=256, maximum=1080, value=1024, step=8, label="Height")
+
             generate_btn = gr.Button("Generate Image", variant="primary")
 
         with gr.Column():
             image_output = gr.Image(label="AI Generated Result")
 
-    # Connect the inputs (including sliders) to the function
     generate_btn.click(
         fn=process_interface,
-        inputs=[prompt_input, image_input, guidance_slider, steps_slider],
+        inputs=[prompt_input, image_input, guidance_slider, steps_slider, width_slider, height_slider],
         outputs=image_output
     )
 
