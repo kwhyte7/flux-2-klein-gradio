@@ -48,6 +48,8 @@ pip install -U gradio
 
 Activate conda, and `python3 mygradio.py` in the same directory or `python mygradio.py` if you are on windows.
 
+# THIS IS UNOFFICIAL. I DO NOT HAVE ANY AFFILIATION WITH BLACK FOREST LABS
+
 otherwise if it doesn't work or requirements are missing, follow the instructions on Black Forest Labs original post.
 Should work I think. Make some issues if it doesn't. Hope this saves you guys some effort!
 
